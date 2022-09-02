@@ -1,3 +1,4 @@
+// Taiki is the command-line client for Taiki Blockchain.
 package main
 
 import (
@@ -12,16 +13,19 @@ const (
 	clientIdentifier = "Taiki"
 )
 
-var app = NewApp("", "the Taiki command line interface")
+var app = NewDefaultApp("", "the Taiki command line interface")
 
+// cli app的初始化挂载工作
 func init() {
 	app.Action = Taiki
 	app.Commands = []cli.Command{}
+	// 创建节点前的前置工作
 	app.Before = func(ctx *cli.Context) error {
 		fmt.Println("prev action ...")
 		runtime.GOMAXPROCS(runtime.NumCPU())
 		return nil
 	}
+	// 创建节点后的后续工作
 	app.After = func(ctx *cli.Context) error {
 		fmt.Println("post action ...")
 		return nil
@@ -37,7 +41,8 @@ func main() {
 	}
 }
 
-func NewApp(gitCommit, usage string) *cli.App {
+// default cli app的创建工作
+func NewDefaultApp(gitCommit, usage string) *cli.App {
 	app := cli.NewApp()
 	app.Author = "stevekeol"
 	app.Email = "stevekeol.x@gmial.com"
@@ -49,6 +54,7 @@ func NewApp(gitCommit, usage string) *cli.App {
 	return app
 }
 
+// 将要挂载在cli app上的内核工作
 func Taiki(ctx *cli.Context) error {
 	// node := makeFullNode(ctx)
 	// startNode(ctx, node)
