@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"text/tabwriter"
+	"time"
 
+	"Taiki/block"
+	"Taiki/blockchain"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -56,9 +60,29 @@ func NewDefaultApp(gitCommit, usage string) *cli.App {
 
 // 将要挂载在cli app上的内核工作
 func Taiki(ctx *cli.Context) error {
-	// node := makeFullNode(ctx)
-	// startNode(ctx, node)
-	// node.Wait()
-	fmt.Println("bootstrap a node")
+	TaikiDemo()
 	return nil
+}
+
+func TaikiDemo() {
+	fmt.Println("bootstrap a node")
+	bc := blockchain.New()
+
+	bc.AddBlock("Send 50.0 BTC to Minner01")
+	time.Sleep(1 * time.Second) //延时记入下一区块，让时间戳不同
+	bc.AddBlock("Send 25.0 BTC to Minner02")
+
+	printBlocks(bc.Blocks())
+
+}
+
+func printBlocks(blocks []*block.Block) {
+	const format = "%x\t %s\t %v\t %x\t \n"
+	tw := new(tabwriter.Writer).Init(os.Stdout, 0, 8, 2, ' ', 0)
+	// fmt.Fprintf(tw, format, "PrevBlockHash", "Data", "TimeStamp", "Hash123")
+	// fmt.Fprintf(tw, format, "-----", "------", "-----", "----")
+	for _, block := range blocks {
+		fmt.Fprintf(tw, format, block.PrevBlockHash, block.Data, time.Unix(block.TimeStamp, 0), string(block.Hash))
+	}
+	tw.Flush() // calculate column widths and print table
 }
