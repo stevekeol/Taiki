@@ -2,6 +2,7 @@ package pow
 
 import (
 	"Taiki/block"
+	"Taiki/logger"
 	"Taiki/transaction"
 	"bytes"
 	"crypto/sha256"
@@ -19,6 +20,8 @@ type ProofOfWork struct {
 	block  *block.Block //要证明的区块
 	target *big.Int     //难度值
 }
+
+var log = logger.Log
 
 //声明一个挖矿难度
 const targetBits = 10
@@ -59,13 +62,15 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 		//把哈希后的数据与难度值进行比较
 		if hashInt.Cmp(pow.target) == -1 {
-			fmt.Printf("工作量证明成功 hash= %x  nonce = %v\n", hash, nonce)
+			fmt.Printf("%T", hash)
+			// @TODO [32]byte转字符串
+			log.Info("pow done", "hash", hash, "nonce", nonce)
+			log.Info("pow done", "hash", string(hash[:]), "nonce", nonce)
 			break
 		} else {
 			nonce++
 		}
 	}
-	fmt.Println()
 
 	return nonce, hash[:]
 }

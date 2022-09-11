@@ -3,11 +3,13 @@ package utxo
 import (
 	"Taiki/block"
 	"Taiki/blockchain"
+	"Taiki/logger"
 	"Taiki/transaction"
 	"encoding/hex"
 	"github.com/boltdb/bolt"
-	"log"
 )
+
+var log = logger.Log
 
 const utxoBucket = "chainstate"
 
@@ -26,17 +28,17 @@ func (u UTXOSet) Reindex() {
 	err := db.Update(func(tx *bolt.Tx) error {
 		err := tx.DeleteBucket(bucketName) //因为我们是要哦重新建一个桶，所以如果原来的数据库中有相同名字的桶，则删除
 		if err != nil && err != bolt.ErrBucketNotFound {
-			log.Panic(err)
+			log.Error("tx.DeleteBucket err", "err", err)
 		}
 		//创建新桶
 		_, err = tx.CreateBucket(bucketName)
 		if err != nil {
-			log.Panic(err)
+			log.Error("tx.CreateBucket err", "err", err)
 		}
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("db.Update err", "err", err)
 	}
 
 	//返回链上所有未花费交易中的交易输出
@@ -50,11 +52,11 @@ func (u UTXOSet) Reindex() {
 		for txID, outs := range UTXO {
 			key, err := hex.DecodeString(txID)
 			if err != nil {
-				log.Panic(err)
+				log.Error("hex.DecodeString err", "err", err)
 			}
 			err = b.Put(key, outs.Serialize())
 			if err != nil {
-				log.Panic(err)
+				log.Error("tx.Bucket.Put err", "err", err)
 			}
 		}
 		return nil
@@ -89,7 +91,7 @@ func (u UTXOSet) FindSpendableOutputs(pubkeyHash []byte, amount int) (int, map[s
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("db.View err", "err", err)
 	}
 
 	return accumulated, unspentOutputs
@@ -116,7 +118,7 @@ func (u UTXOSet) FindUTXO(pubKeyHash []byte) []transaction.TXOutput {
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("db.View err", "err", err)
 	}
 	return UTXOs
 }
@@ -144,12 +146,12 @@ func (u UTXOSet) Update(block *block.Block) {
 					if len(updatedOuts.Outputs) == 0 {
 						err := b.Delete(vin.Txid)
 						if err != nil {
-							log.Panic(err)
+							log.Error("tx.Bucket.Delete err", "err", err)
 						}
 					} else {
 						err := b.Put(vin.Txid, updatedOuts.Serialize())
 						if err != nil {
-							log.Panic(err)
+							log.Error("tx.Bucket.Put err", "err", err)
 						}
 					}
 				}
@@ -161,13 +163,13 @@ func (u UTXOSet) Update(block *block.Block) {
 
 			err := b.Put(tx.ID, newOutputs.Serialize())
 			if err != nil {
-				log.Panic(err)
+				log.Error("tx.Bucket.Put err", "err", err)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("db.Update err", "err", err)
 	}
 }
 
@@ -186,7 +188,7 @@ func (u UTXOSet) CountTransactions() int {
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("db.View err", "err", err)
 	}
 	return counter
 }

@@ -2,21 +2,22 @@ package blockchain
 
 import (
 	"Taiki/block"
+	"Taiki/logger"
 	"Taiki/pow"
 	"Taiki/transaction"
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"github.com/boltdb/bolt"
-	"log"
 	"os"
 )
 
 /*
 	区块链实现
 */
+var log = logger.Log
+
 const dbFile = "blockchain.db"
 const blocksBucket = "blocks"
 const genesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
@@ -39,7 +40,7 @@ func (bc *Blockchain) MineBlock(transactions []*transaction.Transaction) *block.
 	//在一笔交易被放入一个块之前进行验证
 	for _, tx := range transactions {
 		if bc.VerifyTransaction(tx) != true {
-			log.Panic("ERROR: 无效 transaction")
+			log.Error("invalid transaction", "tx", tx)
 		}
 	}
 	//只读的方式浏览数据库，获取当前区块链顶端区块的哈希，为加入下一区块做准备
@@ -50,7 +51,7 @@ func (bc *Blockchain) MineBlock(transactions []*transaction.Transaction) *block.
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("bc.db.View", "err", err)
 	}
 
 	//prevBlock := bc.Blocks[len(bc.Blocks)-1]
@@ -62,7 +63,7 @@ func (bc *Blockchain) MineBlock(transactions []*transaction.Transaction) *block.
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(newBlock.Hash, newBlock.Serialize())
 		if err != nil {
-			log.Panic(err)
+			log.Error("tx.Bucket Put error", "err", err)
 		}
 		err = b.Put([]byte("l"), newBlock.Hash)
 		bc.tip = newBlock.Hash
@@ -70,7 +71,7 @@ func (bc *Blockchain) MineBlock(transactions []*transaction.Transaction) *block.
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("bc.db.Update error", "err", err)
 	}
 
 	return newBlock
@@ -90,35 +91,35 @@ func CreateBlockchain(address string) *Blockchain {
 
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
-		log.Panic(err)
+		log.Error("bolt.Open error", "err", err)
 	}
 	//读写操作数据库
 	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		//查看名字为blocksBucket的Bucket是否存在
 		if b != nil {
-			fmt.Println("Blockchain 已经存在...")
+			log.Info("Blockchain already existed")
 			os.Exit(1)
 		}
 		//否则，则重新创建
 		b, err := tx.CreateBucket([]byte(blocksBucket))
 		if err != nil {
-			log.Panic(err)
+			log.Error("tx.CreateBucket error", "err", err)
 		}
 
 		err = b.Put(genesis.Hash, genesis.Serialize()) //写入键值对，区块哈希对应序列化后的区块
 		if err != nil {
-			log.Panic(err)
+			log.Error("tx.CreateBucket Put error", "err", err)
 		}
 		err = b.Put([]byte("l"), genesis.Hash) //"l"键对应区块链顶端区块的哈希
 		if err != nil {
-			log.Panic(err)
+			log.Error("tx.CreateBucket Put1 error", "err", err)
 		}
 		tip = genesis.Hash //指向最后一个区块，这里也就是创世区块
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("db.Update error", "err", err)
 	}
 
 	bc := Blockchain{tip, db}
@@ -133,7 +134,7 @@ func NewBlockchain() *Blockchain {
 	//打开一个数据库文件，如果文件不存在则创建该名字的文件
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
-		log.Panic(err)
+		log.Error("bolt.Open error", "err", err)
 	}
 	//读写操作数据库
 	err = db.Update(func(tx *bolt.Tx) error {
@@ -141,7 +142,7 @@ func NewBlockchain() *Blockchain {
 		//查看名字为blocksBucket的Bucket是否存在
 		if b == nil {
 			//不存在
-			fmt.Println("不存在区块链，需要重新创建一个区块链...")
+			log.Warn("no blockchain, need build one")
 			os.Exit(1)
 		}
 		//如果存在blocksBucket桶，也就是存在区块链
@@ -151,7 +152,7 @@ func NewBlockchain() *Blockchain {
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("db.Update err", "err", err)
 	}
 
 	bc := Blockchain{tip, db} //此时Blockchain结构体字段已经变成这样了
@@ -186,7 +187,7 @@ func (i *BlockchainIterator) Next() *block.Block {
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		log.Error("db.View err", "err", err)
 	}
 
 	//把迭代器中的当前区块哈希设置为上一区块的哈希，实现迭代的作用
@@ -374,7 +375,7 @@ func (bc *Blockchain) SignTransaction(tx *transaction.Transaction, privKey ecdsa
 	for _, vin := range tx.Vin {
 		prevTX, err := bc.FindTransaction(vin.Txid) //找到输入引用的输出所在的交易
 		if err != nil {
-			log.Panic(err)
+			log.Error("FindTransaction err", "err", err)
 		}
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
@@ -391,7 +392,7 @@ func (bc *Blockchain) VerifyTransaction(tx *transaction.Transaction) bool {
 	for _, vin := range tx.Vin {
 		prevTX, err := bc.FindTransaction(vin.Txid)
 		if err != nil {
-			log.Panic(err)
+			log.Error("FindTransaction err", "err", err)
 		}
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}

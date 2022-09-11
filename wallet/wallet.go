@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"Taiki/base58"
+	"Taiki/logger"
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -11,9 +12,10 @@ import (
 	"fmt"
 	"golang.org/x/crypto/ripemd160"
 	"io/ioutil"
-	"log"
 	"os"
 )
+
+var log = logger.Log
 
 const version = byte(0x00)
 const walletFile = "wallet.dat"
@@ -40,7 +42,7 @@ func newKeyPair() (ecdsa.PrivateKey, []byte) {
 	//通过椭圆曲线 随机生成一个私钥
 	private, err := ecdsa.GenerateKey(curve, rand.Reader)
 	if err != nil {
-		log.Panic(err)
+		log.Error("ecdsa.GenerateKey err", "err", err)
 	}
 	pubKey := append(private.PublicKey.X.Bytes(), private.PublicKey.Y.Bytes()...)
 
@@ -71,7 +73,7 @@ func HashPubKey(pubKey []byte) []byte {
 	RIPEMD160Hasher := ripemd160.New()
 	_, err := RIPEMD160Hasher.Write(publicSHA256[:])
 	if err != nil {
-		log.Panic(err)
+		log.Error("RIPEMD160Hasher.Write err", "err", err)
 	}
 	publicRIPEMD160 := RIPEMD160Hasher.Sum(nil)
 
@@ -144,14 +146,14 @@ func (ws *Wallets) LoadFromFile() error {
 	}
 	fileContent, err := ioutil.ReadFile(walletFile)
 	if err != nil {
-		log.Panic(err)
+		log.Error("ioutil.ReadFile err", "err", err)
 	}
 	var wallets Wallets
 	gob.Register(elliptic.P256())
 	decoder := gob.NewDecoder(bytes.NewReader(fileContent))
 	err = decoder.Decode(&wallets)
 	if err != nil {
-		log.Panic(err)
+		log.Error("wallets Decode err", "err", err)
 	}
 	ws.Wallets = wallets.Wallets
 	return nil
@@ -164,10 +166,10 @@ func (ws Wallets) SaveToFile() {
 	encoder := gob.NewEncoder(&content)
 	err := encoder.Encode(ws)
 	if err != nil {
-		log.Panic(err)
+		log.Error("content Encode err", "err", err)
 	}
 	err = ioutil.WriteFile(walletFile, content.Bytes(), 0644)
 	if err != nil {
-		log.Panic(err)
+		log.Error("ioutil.WriteFile err", "err", err)
 	}
 }

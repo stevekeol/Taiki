@@ -18,3 +18,4 @@
 接下来：
 - 将数据库由`github.com/boltdb/bolt`替换为`leveldb`
 - 代码结构和实现重新设计
+- 基于`gopkg.in/urfave/cli.v1`将Taiki支持的命令getbalance等植入

@@ -3,6 +3,7 @@ package cli
 import (
 	"Taiki/base58"
 	"Taiki/blockchain"
+	"Taiki/logger"
 	"Taiki/pow"
 	"Taiki/transaction"
 	"Taiki/utxo"
@@ -10,10 +11,11 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 )
+
+var log = logger.Log
 
 //首先我们想要拥有这些命令 1.加入区块命令 2.打印区块链命令
 
@@ -24,15 +26,16 @@ type CLI struct {
 
 //加入输入格式错误信息提示
 func (cli *CLI) printUsage() {
+	log.Info("==========")
 	fmt.Println("Usage:")
 	// fmt.Println("  getbalance -address ADDRESS  得到该地址的余额")
 	fmt.Println(" createblockchain -address ADDRESS 创建一条链并且该地址会得到狗头金")
-	fmt.Println(" createwallet - 创建一个钱包，里面放着一对秘钥")
-	fmt.Println(" getbalance -address ADDRESS  得到该地址的余额")
-	fmt.Println(" listaddresses - Lists all addresses from the wallet file")
-	fmt.Println(" printchain - 打印链")
-	fmt.Println(" reindexutxo - Rebuilds the UTXO set")
-	fmt.Println(" send -from FROM -to TO -amount AMOUNT 地址from发送amount的币给地址to")
+	fmt.Println(" createwallet                      创建一个钱包，里面放着一对秘钥")
+	fmt.Println(" getbalance       -address ADDRESS 得到该地址的余额")
+	fmt.Println(" listaddresses                     罗列钱包中所有的地址")
+	fmt.Println(" printchain                        打印链")
+	fmt.Println(" reindexutxo                       重构UTXO集合")
+	fmt.Println(" send             -from FROM -to TO -amount AMOUNT 地址from发送amount的币给地址to")
 }
 
 //判断命令行参数，如果没有输入参数则显示提示信息
@@ -52,7 +55,7 @@ func (cli *CLI) validateArgs() {
 //创建一条链
 func (cli *CLI) createBlockchain(address string) {
 	if !wallet.ValidateAddress(address) {
-		log.Panic("ERROR: Address is not valid")
+		log.Error("ERROR: Address is not valid")
 	}
 
 	bc := blockchain.CreateBlockchain(address)
@@ -60,7 +63,7 @@ func (cli *CLI) createBlockchain(address string) {
 
 	UTXOSet := utxo.UTXOSet{bc}
 	UTXOSet.Reindex()
-	fmt.Println("Done!")
+	log.Info("createBlockchain done")
 }
 
 //创建钱包函数
@@ -68,13 +71,13 @@ func (cli *CLI) createWallet() {
 	wallets, _ := wallet.NewWallets()
 	address := wallets.CreateWallet()
 	wallets.SaveToFile()
-	fmt.Printf("Your new address: %s\n", address)
+	log.Info("new address created", "address", address)
 }
 
 //求账户余额
 func (cli *CLI) getBalance(address string) {
 	if !wallet.ValidateAddress(address) {
-		log.Panic("ERROR: Address is not valid")
+		log.Error("address is not valid", "address", address)
 	}
 	bc := blockchain.NewBlockchain()
 	UTXOSet := utxo.UTXOSet{bc}
@@ -91,18 +94,18 @@ func (cli *CLI) getBalance(address string) {
 		balance += out.Value
 	}
 
-	fmt.Printf("Balance of '%s':%d\n", address, balance)
+	log.Info("getBalance", "address", address, "balance", balance)
 }
 
 //列出地址名单,钱包集合中的地址有哪些
 func (cli *CLI) listAddresses() {
 	wallets, err := wallet.NewWallets()
 	if err != nil {
-		log.Panic(err)
+		log.Error("listAddresses", "err", err)
 	}
 	addresses := wallets.GetAddresses()
 	for _, address := range addresses {
-		fmt.Println(address)
+		log.Info("listAddresses", "address", address)
 	}
 }
 
@@ -120,19 +123,25 @@ func (cli *CLI) printChain() {
 
 		block := bci.Next() //从顶端区块向前面的区块迭代
 
-		fmt.Printf("------======= 区块 %x ============\n", block.Hash)
-		fmt.Printf("时间戳:%v\n", block.Timestamp)
-		fmt.Printf("PrevHash:%x\n", block.PrevBlockHash)
+		// fmt.Printf("------======= 区块 %x ============\n", block.Hash)
+		// fmt.Printf("时间戳:%v\n", block.Timestamp)
+		// fmt.Printf("PrevHash:%x\n", block.PrevBlockHash)
+		log.Info("BlockInfo", "Hash", block.Hash,
+			"Timestamp", block.Timestamp,
+			"PrevBlockHash", block.PrevBlockHash)
+
 		//fmt.Printf("Data:%s\n",block.Data)
 		//fmt.Printf("Hash:%x\n",block.Hash)
 		//验证当前区块的pow
 		pow := pow.NewProofOfWork(block)
 		boolen := pow.Validate()
-		fmt.Printf("POW is %s\n", strconv.FormatBool(boolen))
+		// fmt.Printf("POW is %s\n", strconv.FormatBool(boolen))
+
+		log.Info("POW", "pow", strconv.FormatBool(boolen))
 
 		for _, tx := range block.Transactions {
 			transaction := (*tx).String()
-			fmt.Printf("%s\n", transaction)
+			log.Info("transaction", "tx", transaction)
 		}
 		fmt.Printf("\n\n")
 
@@ -154,10 +163,10 @@ func (cli *CLI) reindexUTXO() {
 //send方法
 func (cli *CLI) send(from, to string, amount int) {
 	if !wallet.ValidateAddress(from) {
-		log.Panic("ERROR: Address is not valid")
+		log.Error("Address is not valid")
 	}
 	if !wallet.ValidateAddress(to) {
-		log.Panic("ERROR: Address is not valid")
+		log.Error("Address is not valid")
 	}
 
 	bc := blockchain.NewBlockchain()
@@ -201,37 +210,37 @@ func (cli *CLI) Run() {
 	case "getbalance":
 		err := getBalanceCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic(err)
+			log.Error("getbalance error", "err", err)
 		}
 	case "createblockchain":
 		err := createBlockchainCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic(err)
+			log.Error("createblockchain error", "err", err)
 		}
 	case "createwallet":
 		err := createWalletCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic(err)
+			log.Error("createwallet error", "err", err)
 		}
 	case "listaddresses":
 		err := listAddressesCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic(err)
+			log.Error("listaddresses error", "err", err)
 		}
 	case "printchain":
 		err := printChainCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic(err)
+			log.Error("printchain error", "err", err)
 		}
 	case "send":
 		err := sendCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic(err)
+			log.Error("send error", "err", err)
 		}
 	case "reindexutxo":
 		err := reindexUTXOCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic(err)
+			log.Error("reindexutxo error", "err", err)
 		}
 	default:
 		cli.printUsage()
@@ -287,20 +296,20 @@ func NewUTXOTransaction(from, to string, amount int, UTXOSet *utxo.UTXOSet) *tra
 	//acc,validOutputs := bc.FindSpendableOutputs(from,amount)
 	wallets, err := wallet.NewWallets()
 	if err != nil {
-		log.Panic(err)
+		log.Error("NewWallets error", "err", err)
 	}
 	_wallet := wallets.GetWallet(from)
 	pubKeyHash := wallet.HashPubKey(_wallet.PublicKey)
 	acc, validOutputs := UTXOSet.FindSpendableOutputs(pubKeyHash, amount)
 	if acc < amount {
-		log.Panic("ERROR:Not enough tokens...")
+		log.Error("Not enough tokens", "acc", acc, "amount", amount)
 	}
 	//通过validOutputs里面的数据来放入建立一个输入列表
 	for txid, outs := range validOutputs {
 		//反序列化得到txID
 		txID, err := hex.DecodeString(txid)
 		if err != nil {
-			log.Panic(err)
+			log.Error("hex.DecodeString error", "err", err)
 		}
 		//遍历输出outs切片,得到TXInput里的Vout字段值
 		for _, out := range outs {
