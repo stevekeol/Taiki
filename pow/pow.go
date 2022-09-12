@@ -6,7 +6,7 @@ import (
 	"Taiki/transaction"
 	"bytes"
 	"crypto/sha256"
-	"fmt"
+	"encoding/base64"
 	"math"
 	"math/big"
 	"strconv"
@@ -62,10 +62,8 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 		//把哈希后的数据与难度值进行比较
 		if hashInt.Cmp(pow.target) == -1 {
-			fmt.Printf("%T", hash)
 			// @TODO [32]byte转字符串
-			log.Info("pow done", "hash", hash, "nonce", nonce)
-			log.Info("pow done", "hash", string(hash[:]), "nonce", nonce)
+			log.Info("pow done", "hash", base64.URLEncoding.EncodeToString(hash[:]), "nonce", nonce)
 			break
 		} else {
 			nonce++

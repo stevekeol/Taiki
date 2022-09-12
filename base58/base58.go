@@ -8,6 +8,7 @@ import (
 var b58Alphabet = []byte("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
 
 //将字节数组编码为Base58
+//@TODO base58编码似乎不能将[]byte 转换成 string
 func Base58Encode(input []byte) []byte {
 	var result []byte
 	x := big.NewInt(0).SetBytes(input)
