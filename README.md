@@ -27,4 +27,5 @@
 [临时性参考简易区块链的实现](https://github.com/zyjblockchain/A_golang_blockchain/blob/master/CLI.go)
 
 ## NOTICE
-源码的注释，要像ETCD那么详尽
+- 源码的注释，要像ETCD那么详尽
+- 源码的实现，可以部分参考ton-c++中validator部分或其它部分
