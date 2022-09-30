@@ -5,9 +5,7 @@
 > 参考TON白皮书、Etherum、BTCD等来实现。
 
 ## Usage
-```bash
-
-```
+> 见 "./cmd/taiki/readme.md"
 
 
 ## ROADMAP
