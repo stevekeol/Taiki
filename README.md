@@ -1,11 +1,14 @@
 # TON-Go（Taiki）
 
-> TON的Go语言自定义实现和优化。TON是Telegram内部用C++编写的一套公链。拥有新颖高效的技术设计。
+> TON的Go语言自定义实现和优化。TON是Telegram内部用C++编写的一套公链。拥有新颖高效的技术设计（多链multi-blockchain、异构heterogeneous、动态分片dynamic-sharding、POS+PBFT、智能合约smartcontract、紧密耦合tightly-coupled system）
 
-> 参考TON白皮书和Etherum来实现。
+> 参考TON白皮书、Etherum、BTCD等来实现。
 
-## references 
-[临时性参考简易区块链的实现](https://github.com/zyjblockchain/A_golang_blockchain/blob/master/CLI.go)
+## Usage
+```bash
+
+```
+
 
 ## ROADMAP
 
@@ -19,3 +22,8 @@
 - 将数据库由`github.com/boltdb/bolt`替换为`leveldb`
 - 代码结构和实现重新设计
 - 基于`gopkg.in/urfave/cli.v1`将Taiki支持的命令getbalance等植入
+
+
+
+## references 
+[临时性参考简易区块链的实现](https://github.com/zyjblockchain/A_golang_blockchain/blob/master/CLI.go)
