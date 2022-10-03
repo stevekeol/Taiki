@@ -1,69 +1,3 @@
-// // Taiki is the command-line client for Taiki Blockchain.
-// package main
-
-// import (
-// 	"fmt"
-// 	"os"
-// 	"runtime"
-// 	"text/tabwriter"
-// 	"time"
-
-// 	"Taiki/block"
-// 	"Taiki/blockchain"
-// 	"gopkg.in/urfave/cli.v1"
-// )
-
-// const (
-// 	clientIdentifier = "Taiki"
-// )
-
-// var app = NewDefaultApp("", "the Taiki command line interface")
-
-// // cli app的初始化挂载工作
-// func init() {
-// 	app.Action = Taiki
-// 	app.Commands = []cli.Command{}
-// 	// 创建节点前的前置工作
-// 	app.Before = func(ctx *cli.Context) error {
-// 		fmt.Println("prev action ...")
-// 		runtime.GOMAXPROCS(runtime.NumCPU())
-// 		return nil
-// 	}
-// 	// 创建节点后的后续工作
-// 	app.After = func(ctx *cli.Context) error {
-// 		fmt.Println("post action ...")
-// 		return nil
-// 	}
-// }
-
-// func main() {
-// 	if err := app.Run(os.Args); err != nil {
-// 		// debug.Exit()
-// 		// console.Stdin.Close()
-// 		fmt.Println("somehting is wrong")
-// 		os.Exit(1)
-// 	}
-// }
-
-// // default cli app的创建工作
-// func NewDefaultApp(gitCommit, usage string) *cli.App {
-// 	app := cli.NewApp()
-// 	app.Author = "stevekeol"
-// 	app.Email = "stevekeol.x@gmial.com"
-// 	app.Version = "0.1.0"
-// 	if len(gitCommit) >= 9 {
-// 		app.Version += "-" + gitCommit[:8]
-// 	}
-// 	app.Usage = usage
-// 	return app
-// }
-
-// // 将要挂载在cli app上的内核工作
-// func Taiki(ctx *cli.Context) error {
-// 	TaikiDemo()
-// 	return nil
-// }
-
 // func TaikiDemo() {
 // 	fmt.Println("bootstrap a node")
 // 	bc := blockchain.New()
@@ -91,12 +25,14 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 
-	CLI "Taiki/cli"
+	// CLI "Taiki/cli"
+	"Taiki/cmd/flags" // 注意该使用方法（包名和文件名一样，且中间路径即为中间文件夹名）
 	"Taiki/logger"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/urfave/cli/v2"
 )
 
 const (
@@ -104,26 +40,11 @@ const (
 )
 
 var (
-	app = NewDefaultApp("", "the Taiki command line interface")
 	log = logger.Log
+	app *cli.App
 )
 
-// cli-app的初始化挂载工作
-func init() {
-	app.Action = Taiki
-	app.Commands = []cli.Command{}
-	// 创建节点前的前置工作
-	app.Before = func(ctx *cli.Context) error {
-		log.Info("Job before Taiki")
-		runtime.GOMAXPROCS(runtime.NumCPU())
-		return nil
-	}
-	// 创建节点后的后续工作
-	app.After = func(ctx *cli.Context) error {
-		log.Info("Job after Taiki")
-		return nil
-	}
-}
+func init() { app = NewDefaultApp() }
 
 func main() {
 	if err := app.Run(os.Args); err != nil {
@@ -134,23 +55,81 @@ func main() {
 	}
 }
 
-// default-cli-app的创建工作
-func NewDefaultApp(gitCommit, usage string) *cli.App {
-	app := cli.NewApp()
-	app.Author = "stevekeol"
-	app.Email = "stevekeol.x@gmial.com"
-	app.Version = "0.1.0"
-	// 版本号的自动调整
-	if len(gitCommit) >= 9 {
-		app.Version += "-" + gitCommit[:8]
+func NewDefaultApp() *cli.App {
+	return &cli.App{
+		Name:  "Taiki",
+		Usage: "the Taiki command line interface",
+		// Version:     "0.1.10",
+		// Description: "A simple desc of Taiki",
+		// Copyright:   "Copyright 2013-2022 The go-ethereum Authors",
+		Authors: []*cli.Author{{
+			Name:  "stevekeol",
+			Email: "stevekeol.x@gmail.com",
+		}},
+		Commands: []*cli.Command{
+			initCommand,
+			createWalletCommand,
+			createBlockchainCommand,
+			listAddressesCommand,
+			sendValueCommand,
+			getBalanceCommand,
+			printChainCommand,
+		},
+
+		Flags: []cli.Flag{
+			flags.Address,
+			flags.From,
+			flags.To,
+			flags.Amount,
+		},
+		Before:               beforeHandler,
+		Action:               appHandler,
+		After:                afterHandler,
+		EnableBashCompletion: true, // 似乎没用
 	}
-	app.Usage = usage
-	return app
+}
+
+// 创建节点前的前置工作
+func beforeHandler(ctx *cli.Context) error {
+	log.Info("Job before Taiki.Run()")
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	return nil
 }
 
 // 将要挂载在cli-app上的内核工作
-func Taiki(ctx *cli.Context) error {
-	cli := CLI.CLI{}
-	cli.Run()
+func appHandler(ctx *cli.Context) error {
+	// cli := CLI.CLI{}
+	// cli.Run()
+	// return nil
+
+	if args := ctx.Args().Slice(); len(args) > 0 {
+		return fmt.Errorf("invalid command: %q", args[0])
+	}
+
+	prepare(ctx)
+	// TODO 创建钱包地址，创建节点，开启监听服务等
 	return nil
+}
+
+// 创建节点后的后续工作
+func afterHandler(ctx *cli.Context) error {
+	log.Info("Job after Taiki.Run()")
+	return nil
+}
+
+func prepare(ctx *cli.Context) error {
+	fmt.Println("prepare context with flag from command-line")
+
+	switch {
+	case ctx.IsSet(flags.Address.Name):
+		log.Info("Starting create a blockchain")
+	}
+
+	return nil
+
+	// // Start metrics export if enabled
+	// utils.SetupMetrics(ctx)
+
+	// // Start system runtime metrics collection
+	// go metrics.CollectProcessMetrics(3 * time.Second)
 }

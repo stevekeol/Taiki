@@ -7,6 +7,12 @@
 ## Usage
 > 见 "./cmd/taiki/readme.md"
 
+## TODO
+- 主G等待中断信号（如ETCD）再退出
+- 子命令的嵌入（如Ethereum中chainmd.go）
+
+- debug和metrics的嵌入（用于debug和指标统计）
+
 
 ## ROADMAP
 
@@ -19,7 +25,7 @@
 接下来：
 - 将数据库由`github.com/boltdb/bolt`替换为`leveldb`
 - 代码结构和实现重新设计
-- 基于`gopkg.in/urfave/cli.v1`将Taiki支持的命令getbalance等植入
+- 基于`gopkg.in/urfave/cli.v1`将Taiki支持的命令getbalance等植入（已经升级cli.v1->cli/v2）
 
 
 
@@ -28,4 +34,4 @@
 
 ## NOTICE
 - 源码的注释，要像ETCD那么详尽
-- 源码的实现，可以部分参考ton-c++中validator部分或其它部分
+- TON核心概念（boc, shardChain, masterChain, 虚拟的workChain, 虚拟的accountChain，IHR等）源码的实现，可以部分参考ton-c++中validator部分或其它部分
