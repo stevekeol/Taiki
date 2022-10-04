@@ -6,8 +6,8 @@ import (
 	"os"
 	"runtime"
 
-	"Taiki/cmd/commands"
-	"Taiki/cmd/flags" // 注意该使用方法（包名和文件名一样，且中间路径即为中间文件夹名）
+	"Taiki/cmd/taiki/commands"
+	"Taiki/cmd/taiki/flags" // 注意该使用方法（包名和文件名一样，且中间路径即为中间文件夹名）
 	"Taiki/logger"
 	"github.com/urfave/cli/v2"
 )
