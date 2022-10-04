@@ -12,6 +12,7 @@
 - 子命令的嵌入（如Ethereum中chainmd.go）
 
 - debug和metrics的嵌入（用于debug和指标统计）
+- 不支持的命令时，不是报错而是给出友好提示
 
 
 ## ROADMAP

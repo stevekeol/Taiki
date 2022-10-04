@@ -4,7 +4,6 @@ package flags
 import (
 	// "fmt"
 	// "path/filepath"
-	"Taiki/internal/flags"
 	"github.com/urfave/cli/v2"
 )
 
@@ -14,22 +13,22 @@ var (
 		Name:     "address",
 		Value:    "14eA6EswuiuMGVXzpmwMxPJPR4qgR7bjRf", // default value
 		Usage:    "sendValue from=<FROM> to=<TO> amount=<AMOUNT>",
-		Category: flags.WalletCategory,
+		Category: WalletCategory,
 	}
 	From = &cli.StringFlag{
 		Name:     "from",
 		Usage:    "sendValue from=<FROM> to=<TO> amount=<AMOUNT>",
-		Category: flags.WalletCategory,
+		Category: WalletCategory,
 	}
 	To = &cli.StringFlag{
 		Name:     "to",
 		Usage:    "sendValue from=<FROM> to=<TO> amount=<AMOUNT>",
-		Category: flags.WalletCategory,
+		Category: WalletCategory,
 	}
 	Amount = &cli.UintFlag{
 		Name:     "amount",
 		Usage:    "sendValue from=<FROM> to=<TO> amount=<AMOUNT>",
-		Category: flags.WalletCategory,
+		Category: WalletCategory,
 	}
 )
 
