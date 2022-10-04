@@ -1,26 +1,3 @@
-// func TaikiDemo() {
-// 	fmt.Println("bootstrap a node")
-// 	bc := blockchain.New()
-
-// 	bc.AddBlock("Send 50.0 BTC to Minner01")
-// 	time.Sleep(1 * time.Second) //延时记入下一区块，让时间戳不同
-// 	bc.AddBlock("Send 25.0 BTC to Minner02")
-
-// 	printBlocks(bc.Blocks())
-
-// }
-
-// func printBlocks(blocks []*block.Block) {
-// 	const format = "%x\t %s\t %v\t %x\t \n"
-// 	tw := new(tabwriter.Writer).Init(os.Stdout, 0, 8, 2, ' ', 0)
-// 	// fmt.Fprintf(tw, format, "PrevBlockHash", "Data", "TimeStamp", "Hash123")
-// 	// fmt.Fprintf(tw, format, "-----", "------", "-----", "----")
-// 	for _, block := range blocks {
-// 		fmt.Fprintf(tw, format, block.PrevBlockHash, block.Data, time.Unix(block.TimeStamp, 0), string(block.Hash))
-// 	}
-// 	tw.Flush() // calculate column widths and print table
-// }
-
 // Taiki is the command-line client for Taiki Blockchain.
 package main
 
@@ -29,7 +6,7 @@ import (
 	"os"
 	"runtime"
 
-	// CLI "Taiki/cli"
+	"Taiki/cmd/commands"
 	"Taiki/cmd/flags" // 注意该使用方法（包名和文件名一样，且中间路径即为中间文件夹名）
 	"Taiki/logger"
 	"github.com/urfave/cli/v2"
@@ -59,23 +36,19 @@ func NewDefaultApp() *cli.App {
 	return &cli.App{
 		Name:  "Taiki",
 		Usage: "the Taiki command line interface",
-		// Version:     "0.1.10",
-		// Description: "A simple desc of Taiki",
-		// Copyright:   "Copyright 2013-2022 The go-ethereum Authors",
 		Authors: []*cli.Author{{
 			Name:  "stevekeol",
 			Email: "stevekeol.x@gmail.com",
 		}},
 		Commands: []*cli.Command{
-			initCommand,
-			createWalletCommand,
-			createBlockchainCommand,
-			listAddressesCommand,
-			sendValueCommand,
-			getBalanceCommand,
-			printChainCommand,
+			commands.InitCommand,
+			commands.CreateWalletCommand,
+			commands.CreateBlockchainCommand,
+			commands.ListAddressesCommand,
+			commands.SendValueCommand,
+			commands.GetBalanceCommand,
+			commands.PrintChainCommand,
 		},
-
 		Flags: []cli.Flag{
 			flags.Address,
 			flags.From,
@@ -98,10 +71,6 @@ func beforeHandler(ctx *cli.Context) error {
 
 // 将要挂载在cli-app上的内核工作
 func appHandler(ctx *cli.Context) error {
-	// cli := CLI.CLI{}
-	// cli.Run()
-	// return nil
-
 	if args := ctx.Args().Slice(); len(args) > 0 {
 		return fmt.Errorf("invalid command: %q", args[0])
 	}

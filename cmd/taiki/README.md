@@ -10,13 +10,13 @@ cd ./Taiki/cmd/taiki && go build -o Taiki
 ./Taiki
 
 # Usage:
-#  createblockchain -address ADDRESS 创建一条链并且该地址会得到狗头金
+#  createblockchain --address ADDRESS 创建一条链并且该地址会得到狗头金
 #  createwallet                      创建一个钱包，里面放着一对秘钥
-#  getbalance       -address ADDRESS 得到该地址的余额
+#  getbalance       --address ADDRESS 得到该地址的余额
 #  listaddresses                     罗列钱包中所有的地址
 #  printchain                        打印链
 #  reindexutxo                       重构UTXO集合
-#  send             -from FROM -to TO -amount AMOUNT 地址from发送amount的币给地址to
+#  send             --from FROM --to TO --amount AMOUNT 地址from发送amount的币给地址to
 
 # 3. 创建钱包
 ./Taiki createwallet
@@ -41,10 +41,10 @@ cd ./Taiki/cmd/taiki && go build -o Taiki
 # INFO[09-30|11:08:40] listAddresses                            address=1GZCzzMfH5U8PB3PD9rhCNBkCkXHMwxEDz
 
 # 7. 转账
-send             -from FROM -to TO -amount AMOUNT 
+send             --from FROM --to TO --amount AMOUNT 
 
 # 8. 查询账户余额
-./Taiki getbalance       -address ADDRESS
+./Taiki getbalance       --address ADDRESS
 
 # 9. 打印整个链
 ./Taiki printchain
