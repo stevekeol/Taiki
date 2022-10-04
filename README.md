@@ -9,6 +9,9 @@
 
 ## TODO
 - 主G等待中断信号（如ETCD）再退出
+
+> 纯命令行的cli工具，无需如此。本身就应该执行完就退出；而是应该在主项目下，类似etcd那样。
+
 - 子命令的嵌入（如Ethereum中chainmd.go）
 
 - debug和metrics的嵌入（用于debug和指标统计）
