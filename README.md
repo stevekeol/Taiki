@@ -8,11 +8,11 @@
 > 见 "./cmd/taiki/readme.md"
 
 ## TODO
-- 主G等待中断信号（如ETCD）再退出
+- 主G等待中断信号（如ETCD）再退出 -ok
 
-> 纯命令行的cli工具，无需如此。本身就应该执行完就退出；而是应该在主项目下，类似etcd那样。
+> 纯命令行的cli工具，无需如此。本身就应该执行完就退出；而是应该在主项目下，类似etcd那样。-ok
 
-- 子命令的嵌入（如Ethereum中chainmd.go）
+- 子命令的嵌入（如Ethereum中chainmd.go）-ok
 
 - debug和metrics的嵌入（用于debug和指标统计）
 - 不支持的命令时，不是报错而是给出友好提示
@@ -28,8 +28,8 @@
 
 接下来：
 - 将数据库由`github.com/boltdb/bolt`替换为`leveldb`
-- 代码结构和实现重新设计
-- 基于`gopkg.in/urfave/cli.v1`将Taiki支持的命令getbalance等植入（已经升级cli.v1->cli/v2）
+- 代码结构和实现重新设计 -ok
+- 基于`gopkg.in/urfave/cli.v1`将Taiki支持的命令getbalance等植入（已经升级cli.v1->cli/v2）-ok
 
 
 
