@@ -16,9 +16,20 @@
 
 - debug和metrics的嵌入（用于debug和指标统计）
 - 不支持的命令时，不是报错而是给出友好提示
+- logger以后要参考ethereum升级（比如增加trace级别等）
 
 
 ## ROADMAP
+
+### 2D-Blockchain
+- masterChain、workerChain, shradChain, accountChain
+- communication(`bag of cells` OR `IPFS`中的`IPLD`和`multiformat`)
+
+### Network
+- IHR
+- p2p
+
+### MicroPayment
 
 已经完成：
 - 区块链的工作量证明POW
