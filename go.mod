@@ -5,14 +5,15 @@ go 1.18
 require (
 	github.com/boltdb/bolt v1.3.1
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
+	github.com/syndtr/goleveldb v1.0.0
 	github.com/urfave/cli/v2 v2.17.1
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
-	gopkg.in/urfave/cli.v1 v1.20.0
 )
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
+	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect

@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"Taiki/base58"
 	"Taiki/blockchain"
+	"Taiki/common"
 	"Taiki/utxo"
 	"Taiki/wallet"
 
@@ -73,7 +73,7 @@ func getBalance(ctx *cli.Context) error {
 	defer bc.Db().Close()
 
 	balance := 0
-	pubKeyHash := base58.Base58Decode([]byte(address))
+	pubKeyHash := common.Base58Decode([]byte(address))
 	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4] //这里的4是校验位字节数，这里就不在其他包调过来了
 
 	UTXOs := UTXOSet.FindUTXO(pubKeyHash)

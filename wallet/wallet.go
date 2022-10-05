@@ -1,7 +1,7 @@
 package wallet
 
 import (
-	"Taiki/base58"
+	"Taiki/common"
 	"Taiki/logger"
 	"bytes"
 	"crypto/ecdsa"
@@ -60,7 +60,7 @@ func (w Wallet) GetAddress() []byte {
 	//把校验位加到上面切片后面
 	fullPayload := append(versionedPayload, checksum...)
 	//通过base58编码上述切片得到地址
-	address := base58.Base58Encode(fullPayload)
+	address := common.Base58Encode(fullPayload)
 
 	return address
 }
@@ -93,7 +93,7 @@ func checksum(payload []byte) []byte {
 //判断输入的地址是否有效,主要是检查后面的校验位是否正确
 func ValidateAddress(address string) bool {
 	//解码base58编码过的地址
-	pubKeyHash := base58.Base58Decode([]byte(address))
+	pubKeyHash := common.Base58Decode([]byte(address))
 	//拆分pubKeyHash,pubKeyHash组成形式为：(一个字节的version) + (Public key hash) + (Checksum)
 	actualChecksum := pubKeyHash[len(pubKeyHash)-addressChecksumLen:]
 	version := pubKeyHash[0]

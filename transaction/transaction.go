@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	"Taiki/base58"
+	"Taiki/common"
 	"Taiki/wallet"
 	"bytes"
 	"crypto/ecdsa"
@@ -130,7 +130,7 @@ func (in *TXInput) UsesKey(pubKeyHash []byte) bool {
 
 //锁定交易输出到固定的地址，代表该输出只能由指定的地址引用
 func (out *TXOutput) Lock(address []byte) {
-	pubKeyHash := base58.Base58Decode(address)
+	pubKeyHash := common.Base58Decode(address)
 	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4]
 	out.PubkeyHash = pubKeyHash
 }
