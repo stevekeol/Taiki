@@ -49,3 +49,55 @@ send             --from FROM --to TO --amount AMOUNT
 # 9. 打印整个链
 ./Taiki printchain
 ```
+
+## TODO
+- 参考aptos的命令行工具输出
+
+```bash
+stevekeol@linux:~/Code/BlockChain-Projects/Aptos/aptos-cli-0.3.4-Ubuntu-x86_64$ ./aptos -h
+aptos 0.3.4
+Aptos Labs <opensource@aptoslabs.com>
+Command Line Interface (CLI) for developing and interacting with the Aptos blockchain
+
+USAGE:
+    aptos <SUBCOMMAND>
+
+OPTIONS:
+    -h, --help       Print help information
+    -V, --version    Print version information
+
+SUBCOMMANDS:
+    account       Tool for interacting with accounts
+    config        Tool for interacting with configuration of the Aptos CLI tool
+    genesis       Tool for setting up an Aptos chain Genesis transaction
+    governance    Tool for on-chain governance
+    help          Print this message or the help of the given subcommand(s)
+    info          Show build information about the CLI
+    init          Tool to initialize current directory for the aptos tool
+    key           Tool for generating, inspecting, and interacting with keys
+    move          Tool for Move related operations
+    node          Tool for operations related to nodes
+    stake         Tool for manipulating stake
+stevekeol@linux:~/Code/BlockChain-Projects/Aptos/aptos-cli-0.3.4-Ubuntu-x86_64$ ./aptos stake -h
+aptos-stake 0.3.4
+Tool for manipulating stake
+
+USAGE:
+    aptos stake <SUBCOMMAND>
+
+OPTIONS:
+    -h, --help       Print help information
+    -V, --version    Print version information
+
+SUBCOMMANDS:
+    add-stake                 Stake coins to the stake pool
+    help                      Print this message or the help of the given subcommand(s)
+    increase-lockup           Increase lockup of all staked coins in the stake pool
+    initialize-stake-owner    Initialize stake owner
+    set-delegated-voter       Delegate voting capability from the stake owner to another account
+    set-operator              Delegate operator capability from the stake owner to another
+                                  account
+    unlock-stake              Unlock staked coins
+    withdraw-stake            Withdraw unlocked staked coins
+
+```
