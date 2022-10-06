@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	SendValueCommand = &cli.Command{
-		Name:      "send",
-		Action:    sendValue,
+	TransferCommand = &cli.Command{
+		Name:      "transfer",
+		Action:    transfer,
 		Usage:     "...",
 		ArgsUsage: "<...>",
 		Flags: []cli.Flag{
@@ -26,7 +26,7 @@ var (
 	}
 )
 
-func sendValue(ctx *cli.Context) error {
+func transfer(ctx *cli.Context) error {
 	from, to, amount := ctx.String("from"), ctx.String("to"), ctx.Uint("amount")
 	if !wallet.ValidateAddress(from) {
 		log.Error("Address(from) is not valid")

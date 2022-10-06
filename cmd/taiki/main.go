@@ -45,7 +45,7 @@ func NewDefaultApp() *cli.App {
 			commands.CreateWalletCommand,
 			commands.CreateBlockchainCommand,
 			commands.ListAddressesCommand,
-			commands.SendValueCommand,
+			commands.TransferCommand,
 			commands.GetBalanceCommand,
 			commands.PrintChainCommand,
 		},
