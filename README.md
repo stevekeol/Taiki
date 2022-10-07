@@ -2,7 +2,7 @@
 
 > TON的Go语言自定义实现和优化。
 
-拥有新颖高效的技术设计：
+🔭  拥有新颖高效的技术设计：
 - 多链multi-blockchain
 - 异构heterogeneous
 - 动态分片dynamic-sharding
