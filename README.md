@@ -1,6 +1,14 @@
 # TON-Go（Taiki）
 
-> TON的Go语言自定义实现和优化。TON是Telegram内部用C++编写的一套公链。拥有新颖高效的技术设计（多链multi-blockchain、异构heterogeneous、动态分片dynamic-sharding、POS+PBFT、智能合约smartcontract、紧密耦合tightly-coupled system）
+> TON的Go语言自定义实现和优化。
+
+拥有新颖高效的技术设计：
+- 多链multi-blockchain
+- 异构heterogeneous
+- 动态分片dynamic-sharding
+- POS+PBFT
+- 智能合约smartcontract
+- 紧密耦合tightly-coupled system
 
 > 参考TON白皮书、Etherum、BTCD等来实现。
 
