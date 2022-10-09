@@ -19,7 +19,7 @@ func loadDatabase(cfg *config) (db.KeyValueStore, error) {
 	case "leveldb":
 		{
 			// log.Debug("Creating block database in LevelDB.")
-			kvdb, err = tdb.NewLevelDBDatabase("blocks_db", 0, 0, false) // TODO 此处的参数写死了
+			kvdb, err = tdb.NewLevelDBDatabase(cfg.DataDir, 0, 0, false) // TODO 此处的参数写死了
 			log.Info("[2/3]database opened(leveldb).")
 		}
 	}

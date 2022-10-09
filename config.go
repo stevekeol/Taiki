@@ -3,10 +3,10 @@ package main
 
 const (
 	defaultConfigFilename = "taiki.conf"
-	defaultDataDirname    = "data"
+	defaultDataDirname    = ".data"
 	defaultDbType         = "leveldb"
-	defaultLogLevel       = "info"
-	defaultLogDirname     = "logs"
+	defaultLogLevel       = ".info"
+	defaultLogDirname     = ".logs"
 	defaultLogFilename    = "taiki.log"
 	defaultBlockMinSize   = 0
 	defaultBlockMaxSize   = 750000 // @TODO
