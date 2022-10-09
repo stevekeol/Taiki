@@ -3,13 +3,13 @@
 package leveldb
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
+	// "fmt"
+	// "strconv"
+	// "strings"
 	"sync"
 	"time"
 
-	"Taiki/common"
+	// "Taiki/common"
 	tdb "Taiki/db"
 	"Taiki/logger"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -18,6 +18,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
+
+var log = logger.Log
 
 const (
 	degradationWarnInterval = time.Minute // 指定当leveldb数据库跟不上请求写入的速度时，打印警告的频率
@@ -59,17 +61,16 @@ func New(file string, cache int, handles int, readonly bool) (*Database, error) 
 func NewCustom(file string, customize func(options *opt.Options)) (*Database, error) {
 	// 1
 	options := &opt.Options{
-		Filter:                 filter.NewBloomFilter(10), //TODO
-		DisableSeeksCompaction: true,
+		Filter: filter.NewBloomFilter(10), //TODO
 	}
 	if customize != nil {
 		customize(options)
 	}
 
-	log.Debug("Allocated cache and file handles in leveldb",
-		"usedCache", common.StorageSize(usedCache),
-		"handles", options.GetOpenFilesCacheCapacity(),
-		"readonly", options.ReadOnly)
+	// log.Debug("Allocated cache and file handles in leveldb",
+	// 	// "usedCache", common.StorageSize(usedCache),
+	// 	"handles", options.GetOpenFilesCacheCapacity(),
+	// 	"readonly", options.ReadOnly)
 
 	db, err := leveldb.OpenFile(file, options)
 	// 默认修复潜在的损坏
@@ -90,17 +91,21 @@ func NewCustom(file string, customize func(options *opt.Options)) (*Database, er
 // Close stops the metrics collection, flushes any pending data to disk and closes
 // all io accesses to the underlying key-value store.
 func (db *Database) Close() error {
-	db.quitLock.Lock()
-	defer db.quitLock.Unlock()
+	// log.Debug("leveldb closing.")
+	// db.quitLock.Lock()
+	// defer db.quitLock.Unlock()
 
-	if db.quitChan != nil {
-		errc := make(chan error)
-		db.quitChan <- errc
-		if err := <-errc; err != nil {
-			db.log.Error("Metrics collection failed", "err", err)
-		}
-		db.quitChan = nil
-	}
+	// log.Debug("leveldb-1")
+
+	// if db.quitChan != nil {
+	// 	errc := make(chan error)
+	// 	db.quitChan <- errc
+	// 	if err := <-errc; err != nil {
+	// 		log.Error("Metrics collection failed", "err", err)
+	// 	}
+	// 	db.quitChan = nil
+	// }
+	// log.Debug("leveldb closed.")
 	return db.db.Close()
 }
 
@@ -130,7 +135,7 @@ func (db *Database) Delete(key []byte) error {
 
 // NewBatch creates a write-only key-value store that buffers changes to its host
 // database until a final write is called.
-func (db *Database) NewBatch() ethdb.Batch {
+func (db *Database) NewBatch() tdb.Batch {
 	return &batch{
 		db: db.db,
 		b:  new(leveldb.Batch),
@@ -138,17 +143,17 @@ func (db *Database) NewBatch() ethdb.Batch {
 }
 
 // NewBatchWithSize creates a write-only database batch with pre-allocated buffer.
-func (db *Database) NewBatchWithSize(size int) ethdb.Batch {
+func (db *Database) NewBatchWithSize(size int) tdb.Batch {
 	return &batch{
 		db: db.db,
-		b:  leveldb.MakeBatch(size),
+		// b:  leveldb.MakeBatch(size), //TODO leveldb.MakeBatch(size)未定义？
 	}
 }
 
 // NewIterator creates a binary-alphabetical iterator over a subset
 // of database content with a particular key prefix, starting at a particular
 // initial key (or after, if it does not exist).
-func (db *Database) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
+func (db *Database) NewIterator(prefix []byte, start []byte) tdb.Iterator {
 	return db.db.NewIterator(bytesPrefixRange(prefix, start), nil)
 }
 
@@ -157,7 +162,7 @@ func (db *Database) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
 // happened on the database.
 // Note don't forget to release the snapshot once it's used up, otherwise
 // the stale data will never be cleaned up by the underlying compactor.
-func (db *Database) NewSnapshot() (ethdb.Snapshot, error) {
+func (db *Database) NewSnapshot() (tdb.Snapshot, error) {
 	snap, err := db.db.GetSnapshot()
 	if err != nil {
 		return nil, err
@@ -225,7 +230,7 @@ func (b *batch) Reset() {
 }
 
 // Replay replays the batch contents.
-func (b *batch) Replay(w ethdb.KeyValueWriter) error {
+func (b *batch) Replay(w tdb.KeyValueWriter) error {
 	return b.b.Replay(&replayer{writer: w})
 }
 

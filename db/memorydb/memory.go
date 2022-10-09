@@ -3,8 +3,10 @@ package memorydb
 import (
 	"Taiki/common"
 	tdb "Taiki/db"
-	"Taiki/logger"
+	"strings"
+	// "Taiki/logger"
 	"errors"
+	"sort"
 	"sync"
 )
 
@@ -107,8 +109,8 @@ func (db *Database) NewBatchWithSize(size int) tdb.Batch {
 // of database content with a particular key prefix, starting at a particular
 // initial key (or after, if it does not exist).
 func (db *Database) NewIterator(prefix []byte, start []byte) tdb.Iterator {
-	db.lock.RLock()
-	defer db.lock.RUnlock()
+	db.m.RLock()
+	defer db.m.RUnlock()
 
 	var (
 		pr     = string(prefix)
@@ -161,8 +163,8 @@ func (db *Database) Compact(start []byte, limit []byte) error {
 // Note, this method is only used for testing (i.e. not public in general) and
 // does not have explicit checks for closed-ness to allow simpler testing code.
 func (db *Database) Len() int {
-	db.lock.RLock()
-	defer db.lock.RUnlock()
+	db.m.RLock()
+	defer db.m.RUnlock()
 
 	return len(db.db)
 }
@@ -308,8 +310,8 @@ type snapshot struct {
 
 // newSnapshot initializes the snapshot with the given database instance.
 func newSnapshot(db *Database) *snapshot {
-	db.lock.RLock()
-	defer db.lock.RUnlock()
+	db.m.RLock()
+	defer db.m.RUnlock()
 
 	copied := make(map[string][]byte)
 	for key, val := range db.db {

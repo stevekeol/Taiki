@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Taiki/db"
 	"Taiki/logger"
 )
 
@@ -12,7 +13,7 @@ type server struct {
 }
 
 // TODO: agentBlacklist, agentWhitelist []string,db database.DB, chainParams *chaincfg.Params
-func newServer(listenAddrs []string, interrupt <-chan struct{}) (*server, error) {
+func newServer(listenAddrs []string, db db.KeyValueStore, interrupt <-chan struct{}) (*server, error) {
 	return &server{
 		// TODO
 		Listeners: listenAddrs,
@@ -20,11 +21,11 @@ func newServer(listenAddrs []string, interrupt <-chan struct{}) (*server, error)
 }
 
 func (s *server) Start() error {
-	log.Debug("server started")
+	log.Info("[3/3]server started...")
 	return nil
 }
 
 func (s *server) Stop() error {
-	log.Debug("server stopped")
+	log.Info("[1/2]server stopped.")
 	return nil
 }
