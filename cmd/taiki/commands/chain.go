@@ -66,11 +66,11 @@ func printChain(ctx *cli.Context) error {
 		block := bci.Next() //从顶端区块向前面的区块迭代
 
 		// fmt.Printf("------======= 区块 %x ============\n", block.Hash)
-		// fmt.Printf("时间戳:%v\n", block.Timestamp)
-		// fmt.Printf("PrevHash:%x\n", block.PrevBlockHash)
+		// fmt.Printf("时间戳:%v\n", block.Header.Timestamp)
+		// fmt.Printf("PrevHash:%x\n", block.Header.PrevBlockHash)
 		log.Info("BlockInfo", "Hash", block.Hash,
-			"Timestamp", block.Timestamp,
-			"PrevBlockHash", block.PrevBlockHash)
+			"Timestamp", block.Header.Timestamp,
+			"PrevBlockHash", block.Header.PrevBlockHash)
 
 		//fmt.Printf("Data:%s\n",block.Data)
 		//fmt.Printf("Hash:%x\n",block.Hash)
@@ -86,7 +86,7 @@ func printChain(ctx *cli.Context) error {
 			log.Info("transaction", "tx", transaction)
 		}
 
-		if len(block.PrevBlockHash) == 0 {
+		if len(block.Header.PrevBlockHash) == 0 {
 			break
 		}
 	}

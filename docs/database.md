@@ -73,3 +73,14 @@ type Ethereum struct {
 	shutdownTracker *shutdowncheck.ShutdownTracker // Tracks if and when the node has shutdown ungracefully
 }
 ```
+
+## bolt -> leveldb
+
+Open:
+
+db, err := leveldb.OpenFile("path/to/db", nil)
+db, err := bolt.Open("my.db", 0600, nil)
+
+bolt.View()
+bolt.Update()
+

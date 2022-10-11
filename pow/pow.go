@@ -39,9 +39,9 @@ func NewProofOfWork(b *block.Block) *ProofOfWork {
 func (pow *ProofOfWork) prepareData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
-			pow.block.PrevBlockHash,
+			pow.block.Header.PrevBlockHash,
 			pow.block.HashTransactions(), //这里被修改，把之前的Data字段修改成交易字段的哈希
-			[]byte(strconv.FormatInt(pow.block.Timestamp, 10)),
+			[]byte(strconv.FormatInt(pow.block.Header.Timestamp, 10)),
 			[]byte(strconv.FormatInt(targetBits, 10)),
 			[]byte(strconv.FormatInt(int64(nonce), 10)),
 		},
@@ -75,13 +75,24 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 //实例化一个区块    /更改data为transaction/
 func NewBlock(transactions []*transaction.Transaction, prevBlockHash []byte) *block.Block {
-	block := &block.Block{time.Now().Unix(), transactions, prevBlockHash, []byte{}, 0}
+	// block := &block.Block{time.Now().Unix(), transactions, prevBlockHash, []byte{}, 0}
+	block := &block.Block{
+		Header: block.BlockHeader{
+			PrevBlockHash: prevBlockHash,
+			MerkleRoot:    []byte{},
+			Timestamp:     time.Now().Unix(),
+			Nonce:         0,
+		},
+		Height:       uint32(0),
+		Hash:         []byte{},
+		Transactions: []*transaction.Transaction{},
+	}
 	// block.SetHash()
 
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
 	block.Hash = hash
-	block.Nonce = nonce
+	block.Header.Nonce = nonce
 	return block
 }
 
@@ -89,7 +100,7 @@ func NewBlock(transactions []*transaction.Transaction, prevBlockHash []byte) *bl
 func (pow *ProofOfWork) Validate() bool {
 	var hashInt big.Int
 
-	data := pow.prepareData(pow.block.Nonce)
+	data := pow.prepareData(pow.block.Header.Nonce)
 	hash := sha256.Sum256(data)
 	hashInt.SetBytes(hash[:])
 

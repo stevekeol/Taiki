@@ -7,15 +7,23 @@ import (
 	_ "crypto/sha256"
 	"encoding/gob"
 	"log"
+	// "time"
 )
 
 //区块的结构体
 type Block struct {
-	Timestamp     int64
-	Transactions  []*transaction.Transaction
+	Header       BlockHeader
+	Height       uint32
+	Hash         []byte
+	Transactions []*transaction.Transaction
+}
+
+type BlockHeader struct {
 	PrevBlockHash []byte
-	Hash          []byte
+	MerkleRoot    []byte
+	Timestamp     int64
 	Nonce         int
+	// Timestamp     time.Time
 }
 
 //区块交易字段的哈希
