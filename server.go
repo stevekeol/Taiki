@@ -8,6 +8,7 @@ import (
 var log = logger.Log
 
 // server provides a taiki server for handling communications to and from taiki peers.
+// TODO 思考定义为server好，还是定义为host好？
 type server struct {
 	Listeners []string
 	DB        db.KeyValueStore
