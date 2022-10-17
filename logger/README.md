@@ -2,7 +2,12 @@
 
 > 基于[log15](https://github.com/inconshreveable/log15)的简易封装（暂时不封装了，直接使用）
 
-
+## TODO
+```golang title="日志希望加入模块标志"
+var log = logger.Log
+log.SetPrefix("chain")
+// INFO[10-17|17:23:57] [chain]server started... 
+```
 
 ## Usage
 ```
