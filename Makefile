@@ -26,3 +26,6 @@ install: build
 deps:
 	@echo "  >  \033[32mInstalling dependencies...\033[0m "
 	go mod tidy
+
+## TODO: test
+## TODO: docker
