@@ -70,9 +70,11 @@ func beforeHandler(ctx *cli.Context) error {
 }
 
 // 将要挂载在cli-app上的内核工作
+// appHandler is the root action for the Taiki command, creates a node configuration,
+// loads the keystore, init the node, then creates and starts the node and node services
 func appHandler(ctx *cli.Context) error {
 	if args := ctx.Args().Slice(); len(args) > 0 {
-		return fmt.Errorf("invalid command: %q", args[0])
+		return fmt.Errorf("failed to read command argument: %q", args[0])
 	}
 
 	prepare(ctx)
@@ -85,6 +87,8 @@ func afterHandler(ctx *cli.Context) error {
 	log.Info("Job after Taiki.Run()")
 	return nil
 }
+
+// --------------- Helpers ----------------
 
 func prepare(ctx *cli.Context) error {
 	fmt.Println("prepare context with flag from command-line")
