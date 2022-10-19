@@ -1,6 +1,11 @@
 # Taiki
 
+> 👋🏻 NOTE: Taiki is a very early work-in-progress. It's currently highly unstable and not very useful as it is.
+
 🔭 Taiki is a simple implement & optimization of TON protocol by TaikiLab, and is a new layer2 blockchain with high performance & scalability.
+
+## Genome
+
 
 The features of Taiki show below:
 -  🌹 multi-chain
