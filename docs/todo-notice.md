@@ -2,6 +2,8 @@
 
 > 参考TON白皮书、Etherum、BTCD等来实现。
 
+> 必须参考：tongo(已经下载), Ton-c++(官方源码)， TON-Blockchain(官方关于链的详细文档)
+
 ## TODO
 - 主G等待中断信号（如ETCD）再退出 -ok
 
