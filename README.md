@@ -2,19 +2,19 @@
 
 > 👋🏻 NOTE: Taiki is a very early work-in-progress. It's currently highly unstable and not very useful as it is.
 
-🔭 Taiki is a simple implement & optimization of TON protocol by TaikiLab, and is a new layer2 blockchain with high performance & scalability.
+🔭 Taiki is a simple implement & optimization of Taiki protocol by TaikiLab, and is a new layer1 blockchain with high performance & scalability.
 
 ## Features
 
 > [Why choose these features](./docs/genome.md)
 
 The features of Taiki show below:
--  🌹 multi-chain
--  🦆 hetergeneous
--  🍓 smart-contract
--  💋 dynamic sharding
--  🍅 pos+pbft/rbft
--  ✍🏻️ tightly-coupled
+-  🌹 multi-chain（多链）
+-  🦆 hetergeneous（异构）
+-  🍓 smart-contract（支持合约）
+-  💋 dynamic sharding（动态分片）
+-  🍅 pos+pbft/rbft（共识）
+-  ✍🏻️ tightly-coupled（紧密耦合）
 
 ## Usage
 
