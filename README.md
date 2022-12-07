@@ -32,3 +32,49 @@ cd ./bin && ./Taiki -h
 ```bash
 cd ./cmd/taiki && cat README.md
 ```
+
+## Structure
+
+## Roadmap
+1. Primitives
+- ADNL
+	- Address
+	- P2P Protocol(UDP over ADNL)
+	- C/S Protocol(TCP over ADNL)
+	- RLDP
+	- Channel
+	- Zero Channel(support for LiteClient)
+	- TDHT
+		- PING
+		- STORE
+		- FIND_NODE
+		- FIND_VALUE
+- Cell&BoC
+- Account
+- Transaction
+- Message
+- Block
+- Masterchain
+- Shardchain
+
+2. Core Concept
+- Validator
+- Collector
+- Dynamic Sharding
+- HR/IHR
+
+3. Core Functionality
+- Message Transfering
+- Transaction Handling
+- Dynamic Sharding
+- PoS+PBFT/RBFT
+- ChainState Management
+- HR/IHR Communication
+
+4. Surrounding
+- Wallet
+- LiteClient
+- MobileApp(ReactNative, ton-npm)
+
+5. Diffcult
+- VM
