@@ -77,4 +77,4 @@ cd ./cmd/taiki && cat README.md
 - MobileApp(ReactNative, ton-npm)
 
 5. Diffcult
-- VM
+- VM (using Go binding instead)
