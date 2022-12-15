@@ -93,7 +93,7 @@ func (c *Cell) ToBoc() ([]byte, error) {
 
 // helper: Cell的哈希化
 func hashCell(c *Cell) ([]byte, error) {
-	content, err := buildSchema(c)
+	content, err := buildHashSchema(c)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func hashCell(c *Cell) ([]byte, error) {
 }
 
 // helper: Cell哈希前构建成对应的[]byte表示
-func buildSchema(c *Cell) ([]byte, error) {
+func buildHashSchema(c *Cell) ([]byte, error) {
 	// 0.构建无引用Cell时的基本形式
 	res := buildSchemaWithoutRefs(c)
 
@@ -131,7 +131,9 @@ func buildSchema(c *Cell) ([]byte, error) {
 }
 
 // helper: 先构建没有外部引用的Cell对应的[]byte表示
-func buildSchemaWithoutRefs(c *Cell) []byte {
+// schema: 内容buffer，其前缀加两个字节（第一个表示外部引用的cell个数，外加-略；第二个字节表示数据位所占字节相关的信息）
+// 		   内容buffer的最后一个字节有特殊处理
+func buildBocSchemaWithoutRefs(c *Cell) []byte {
 	// 注意这里+7的巧妙！（即哪怕该Cell的bits最后余1个bit，也会再多创建一个字节来容纳）
 	// +2是为了在该Cell的前两个字节描述
 	res := make([]byte, (c.BitLen()+7)/8+2)
