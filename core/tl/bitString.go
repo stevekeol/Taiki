@@ -6,14 +6,12 @@ import (
 	"strings"
 )
 
-var ErrBitStingOverflow = errors.New("BitString overflow")
-
 // BitString提供位操作
 type BitString struct {
 	buf    []byte // 容纳这些bit位
 	cap    int    // 总容量
-	len    int    // 实际使用的bit位长
-	cursor int    // 接下来可以操作的位置
+	len    int    // 实际使用的bit位长(同时也是指明下一个将要写入的Bit的位置)
+	cursor int    // 位串中逐个bit位读取的游标位置（即下一个可以读取的位置）
 }
 
 // 创建一个新的待操作位串
@@ -210,6 +208,105 @@ func (bs *BitString) Off(index int) error {
 ///                                            ///
 //////////////////////////////////////////////////
 
+// 读出长度为bitLen的位串，并将其转为uint64类型返回
+// 读取开始的位置是cursor指定的位置
+// 具体做法：构建一个uint64值，逐个bit位取出的同时将其设置在该uint64的对应位上
+// 1. 当bitLen不足64位时，该uint64数值的高位自然的保留着0
+// 2. 当bitLen大于64位时，该情况不允许！
+func (bs *BitString) ReadUint(bitLen int) (uint64, error) {
+	// 判断是否要取的bit位数超过最大允许位数
+	if bitLen > 64 {
+		return 0, errors.New("too much bits beyond uint64")
+	}
+	// 判断剩下可读的bit位数是否足够读取
+	if bs.bitsRemainingForRead() < bitLen {
+		return 0, errors.New("not enough bits in bitstring")
+	}
+	if bitLen == 0 {
+		return 0, nil
+	}
+	var res uint64 = 0
+	for i := bitLen - 1; i >= 0; i-- {
+		if bs.readBit() {
+			res |= 1 << i
+		}
+	}
+	return res, nil
+}
+
+// 读出长度为bitLen的位串，并将其视为int64类型的值返回
+// 重点是要判断该bitLen的第一个bit位是1还是0，以此来判定int64值的构建流程
+func (bs *BitString) ReadInt(bitLen int) (int64, error) {
+	// 判断是否要取的bit位数超过最大允许位数
+	if bitLen > 64 {
+		return 0, errors.New("too much bits beyond uint64")
+	}
+	// 判断剩下可读的bit位数是否足够读取
+	if bs.bitsRemainingForRead() < bitLen {
+		return 0, errors.New("not enough bits in bitstring")
+	}
+	if bitLen == 0 {
+		return 0, nil
+	}
+	// 当只取出一个bit，且要将其视为int64的话：
+	// 1. 若该bit为1，则为-1
+	// 2. 若该bit为0，则为0
+	if bitLen == 1 {
+		if bs.readBit() {
+			return -1, nil
+		}
+		return 0, nil
+	}
+	// 若为负数：
+	// 1. 先取出除去符号位之外剩余bit位表示的正数-positiveValue(uint64类型)
+	// 2. 再计算剩余bit位全满且刚好溢出的值-overflowValue
+	// 3. positive 减去 overflowValue 的值，就为这个位串所表示的负数
+	if bs.readBit() {
+		positiveValue, err := bs.ReadUint(bitLen - 1)
+		if err != nil {
+			return 0, err
+		}
+		// 数值1默认是int类型，因此需要刻意转换成uint64，才能和同为uint64类型的positiveValue相减
+		overflowValue := uint64(1) << (bitLen - 1)
+		return int64(positiveValue - overflowValue), nil
+	}
+	// 若为正数：
+	// 直接取出就好，不过需要将取出的uint64类型转换成int64类型
+	positiveValue, err := bs.ReadUint(bitLen - 1)
+	if err != nil {
+		return 0, nil
+	}
+	return int64(positiveValue), nil
+}
+
+// 一次性读取n个bit位
+// 开始读取的位置，是当前cursor指定的位置
+// 若当前BitString的可读取bit位不足n，则直接返回空的BitString对象
+
+func (bs *BitString) ReadBits(n int) (BitString, error) {
+	bitString := NewBitString(n)
+	for i := 0; i < n; i++ {
+		bit, err := bs.ReadBit()
+		if err != nil {
+			return BitString{}, err
+		}
+		err = bitString.WriteBit(bit)
+		if err != nil {
+			return BitString{}, err
+		}
+	}
+	return bitString, nil
+}
+
+// 逐个自动取出游标cursor指定的位置的bit（用布尔量表示1或0）
+func (bs *BitString) ReadBit() (bool, error) {
+	if bs.bitsRemainingForRead() < 1 {
+		return false, errors.New("not enough bits in bitstring")
+	}
+
+	return bs.readBit(), nil
+}
+
 //////////////////////////////////////////////////
 ///											   ///
 ///                   Helper                   ///
@@ -219,7 +316,24 @@ func (bs *BitString) Off(index int) error {
 // 检查给定的索引位置是否在容量的允许范围内
 func (bs *BitString) checkValid(index int) error {
 	if index > bs.cap {
-		return ErrBitStingOverflow
+		return errors.New("BitString overflow")
 	}
 	return nil
+}
+
+// 取出BitString给定索引位置的值（用布尔量表示1或0）
+func (bs *BitString) getBit(index int) bool {
+	return (bs.buf[index/8] & (1 << (7 - (index % 8)))) > 0
+}
+
+// 逐个自动取出游标cursor指定的位置的bit（用布尔量表示1或0）
+func (bs *BitString) readBit() bool {
+	bit := bs.getBit(bs.cursor)
+	bs.cursor++
+	return bit
+}
+
+// 计算在已经写入的bits位中，还有多少个bits位可以读取
+func (bs *BitString) bitsRemainingForRead() int {
+	return bs.len - bs.cursor
 }
