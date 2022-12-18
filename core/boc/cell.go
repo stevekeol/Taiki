@@ -1,15 +1,11 @@
 package boc
 
 import (
-	"Taiki/core/tl"
-	"Taiki/logger"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
 )
-
-var log = logger.Log
 
 const CellBits = 1023
 const CellMaxRefs = 4
@@ -18,7 +14,7 @@ const CellTreeDepthLimit = 10000
 var ErrCellDepthLimit = errors.New("Depth Limit of Cell")
 
 type Cell struct {
-	bits      tl.BitString
+	bits      BitString
 	refs      [CellMaxRefs]*Cell
 	refCursor int  // 引用Cell的游标
 	isExotic  bool // 是否是Exotic Cell的标记
@@ -26,7 +22,7 @@ type Cell struct {
 
 func NewCell() *Cell {
 	return &Cell{
-		bits: tl.NewBitString(CellBits),
+		bits: NewBitString(CellBits),
 		refs: [4]*Cell{},
 	}
 }
@@ -36,7 +32,7 @@ func NewCell() *Cell {
 // 两者的区分表示是：前者的第一个字节不超过4；后者大于等于5
 func NewCellExotic() *Cell {
 	return &Cell{
-		bits: tl.NewBitString(CellBits),
+		bits: NewBitString(CellBits),
 		refs: [4]*Cell{},
 		// isExotic: true,
 	}
@@ -104,7 +100,7 @@ func hashCell(c *Cell) ([]byte, error) {
 // helper: Cell哈希前构建成对应的[]byte表示
 func buildHashSchema(c *Cell) ([]byte, error) {
 	// 0.构建无引用Cell时的基本形式
-	res := buildSchemaWithoutRefs(c)
+	res := buildBocSchemaWithoutRefs(c)
 
 	// 1.依次缀连上每一个引用Cell的最大深度（每个最大深度用2个字节表示）
 	for _, ref := range c.Refs() {
@@ -120,7 +116,7 @@ func buildHashSchema(c *Cell) ([]byte, error) {
 	}
 
 	// 2.再依次缀连上每一个引用Cell的256位哈希(每个哈希用32字节表示)
-	for _, ref := range c.Refs {
+	for _, ref := range c.Refs() {
 		hash, err := ref.Hash()
 		if err != nil {
 			return nil, err
@@ -139,8 +135,8 @@ func buildBocSchemaWithoutRefs(c *Cell) []byte {
 	res := make([]byte, (c.BitLen()+7)/8+2)
 
 	flag := 0
-	if c.isExotic() {
-		flag := 8
+	if c.isExotic {
+		flag = 8
 	}
 
 	// 也是通过第一个字节，除了取出引用Cell的个数，也能判断Cell的类型（Ordinary/Exotic等）
@@ -149,11 +145,11 @@ func buildBocSchemaWithoutRefs(c *Cell) []byte {
 	// 每个Cell布局中的第2个字节：前7位为数据位长度/8向下取整的值，最后一位为能否整除的标志（有余数为1）
 	// TODO：第2个字节在Hash化的过程中的表示方法？
 	res[1] = byte((c.BitLen()+7)/8 + c.BitLen()/8)
-	copy(res[2:], c.getBuffer())
+	copy(res[2:], c.bits.GetBuffer())
 
-	if cell.BitLen()%8 != 0 {
+	if c.BitLen()%8 != 0 {
 		// TODO: 再次思考为何如此设计
-		res[len(res)-1] |= 1 << (7 - cell.BitLen()%8)
+		res[len(res)-1] |= 1 << (7 - c.BitLen()%8)
 	}
 	return res
 }
@@ -184,6 +180,6 @@ func getMaxDepth(c *Cell, iterCounter *int) (int, error) {
 }
 
 // helper: 获取该Cell中真正存储数据的Bit的[]byte
-func (c *Cell) getBuffer() {
-	return c.bits.Buffer()
+func (c *Cell) getBuffer() []byte {
+	return c.bits.GetBuffer()
 }
