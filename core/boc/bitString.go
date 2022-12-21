@@ -497,6 +497,7 @@ func (bs *BitString) UsedBits() string {
 }
 
 // TODO
+// Reference: TVM白皮书 1.0.2
 func (bs *BitString) ToFiftHex() string {
 	if bs.len%4 == 0 {
 		str := strings.ToUpper(hex.EncodeToString(bs.buf[0 : (bs.len+7)/8]))

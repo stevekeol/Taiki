@@ -1,18 +1,26 @@
 package boc
 
 import (
+	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
 )
 
+// TODO：思考为何1023而不是1024?
 const CellBits = 1023
 const CellMaxRefs = 4
 const CellTreeDepthLimit = 10000
 
 var ErrCellDepthLimit = errors.New("Depth Limit of Cell")
+var ErrCellRefsOverflow = errors.New("Too much refs of Cell")
+var ErrCellRefsShortage = errors.New("Shortage refs of Cell")
 
+// Taiki所有数据结构(不管是传输还是存储)的序列化的最小单元
+// 其底层是依赖的BitString；其上层是BoC；
+// TODO：add capacity checking
 type Cell struct {
 	bits      BitString
 	refs      [CellMaxRefs]*Cell
@@ -22,8 +30,10 @@ type Cell struct {
 
 func NewCell() *Cell {
 	return &Cell{
-		bits: NewBitString(CellBits),
-		refs: [4]*Cell{},
+		// TODO: 每一个Cell所对应的底层Buffer都是分配满的吗？
+		bits:     NewBitString(CellBits),
+		refs:     [4]*Cell{},
+		isExotic: false,
 	}
 }
 
@@ -32,11 +42,143 @@ func NewCell() *Cell {
 // 两者的区分表示是：前者的第一个字节不超过4；后者大于等于5
 func NewCellExotic() *Cell {
 	return &Cell{
-		bits: NewBitString(CellBits),
-		refs: [4]*Cell{},
-		// isExotic: true,
+		bits:     NewBitString(CellBits),
+		refs:     [4]*Cell{},
+		isExotic: true,
 	}
 }
+
+/////////////////////////////////////////////////////////////
+///											              ///
+///                       core                            ///
+///                                                       ///
+/////////////////////////////////////////////////////////////
+
+// 利用给定私钥对当前Cell进行签名，并返回签名(其本质是一个位串)
+func (c *Cell) Sign(prvKey ed25519.PrivateKey) (BitString, error) {
+	hash, err := c.Hash()
+	if err != nil {
+		//TODO: 应该返回BitString{}，还是nil?
+		return BitString{}, err
+	}
+	// ed25519的私钥大小为64字节，公钥大小为32字节，签名为64字节
+	bs := NewBitString(512)
+	err = bs.WriteBytes(ed25519.Sign(prvKey, hash[:]))
+	return bs, err
+}
+
+// 计算当前Cell的Hash
+// 返回结果是[]byte(所有Hash默认都如此，以便操作)
+func (c *Cell) Hash() ([]byte, error) {
+	return hashCell(c)
+}
+
+// 将该Cell哈希结果以字符串编码并返回
+func (c *Cell) HashString() (string, error) {
+	hash, err := hashCell(c)
+	if err != nil {
+		log.Error("Cell hash error")
+	}
+	return hex.EncodeToString(hash), err
+}
+
+// 将当前的Cell编码为16进制字符串
+// 注：递归的将自身，以及所有引用的Cells全部编码为16进制字符串
+func (c *Cell) String() string {
+	iter := CellTreeDepthLimit
+	return c.string("", &iter)
+}
+
+// 将该Cell序列化为Boc
+func (c *Cell) Boc() ([]byte, error) {
+	return SerializeBoc(c, false, false, false, 0)
+}
+
+// 将该Cell序列化为Boc并编码为字符串
+func (c *Cell) BocString() (string, error) {
+	boc, err := SerializeBoc(c, false, false, false, 0)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(boc), nil
+}
+
+// 将该Cell序列化为Boc并编码为base64
+func (c *Cell) BocBase64() (string, error) {
+	boc, err := SerializeBoc(c, false, false, false, 0)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(boc), nil
+}
+
+// 将当前Cell以TL的方式序列化写入到给定的Cell中
+// TODO：此处的tag应该是有作用的吧？
+func (c *Cell) MarshalTL(cell *Cell, tag string) error {
+	*cell = c
+	return nil
+}
+
+// 从给定Cell中以Cell的方式反序列化读出(tag指定的长度的)Cell来给当前Cell赋值
+// TODO
+func (c *Cell) UnMarshalTL(cell *Cell, tag string) error {
+	*c = *cell
+	return nil
+}
+
+/////////////////////////////////////////////////////////////
+///											              ///
+///                       Utils                           ///
+///                                                       ///
+/////////////////////////////////////////////////////////////
+
+// 判断该Cell是否为特种Cell
+func (c *Cell) IsExotic() bool {
+	return c.isExotic
+}
+
+// 当前Cell的游标重置
+// 注：游标包括: 位串读取游标，以及引用读取游标
+// 注：是递归重置(即将所有引用的Cell的游标都重置)
+func (c *Cell) ReadReset() {
+	c.readReset(make(map[*Cell]struct{}))
+}
+
+/////////////////////////////////////////////////////////////
+///											              ///
+///                       bits                            ///
+///    为了精简Cell挂载的方法，其bits上定义的方法不再重复定义    ///
+///                                                       ///
+/// 1.  bits.GetWriteCursor(): 获取已经写入的bit位的长度      ///
+/// 2.  bits.BitsAvailableForWrite: 还可以写入的bit位的长度
+/// 3.  bits.BitsAvailableForRead
+/// 4.  bits.WriteBytes:
+/// 5.  bits.ReadUint
+/// 6.  bits.ReadUintAndBackward
+/// 7.  bits.WriteUint
+/// 8.  bits.WriteInt
+/// 9.  bits.SetTopUppedArray
+/// 10. bits.Buffer
+/// 11. bits.ReadSkip
+/// 12. bits.ReadBits
+/// 13. bits.ReadBit
+/// 14. bits.WriteBitString
+/// 15. bits.ReadInt
+/// 16. bits.ReadBytes
+/// 17. bits.ReadBigUint
+/// 18. ReadRemainingBits
+/////////////////////////////////////////////////////////////
+
+// 获取当前Cell的底层的位串已使用的长度
+func (c *Cell) BitSize() int {
+	return c.bits.GetWriteCursor()
+}
+
+/////////////////////////////////////////////////////////////
+///											              ///
+///                       refs                            ///
+///                                                       ///
+/////////////////////////////////////////////////////////////
 
 // 该Cell中外部引用的Cell的个数
 func (c *Cell) RefsCount() int {
@@ -61,31 +203,45 @@ func (c *Cell) Refs() []*Cell {
 	return res
 }
 
-// 获取已经使用的Bit位的长度
-func (c *Cell) BitLen() int {
-	return c.bits.GetWriteCursor()
+// 尝试向当前Cell新增一个空白的Cell引用
+// 注：一般在调用NewRef之后，紧接着就是对该新建的Cell的填充处理
+func (c *Cell) NewRef() (*Cell, error) {
+	cell := NewCell()
+	return cell, c.AddRef(cell)
 }
 
-// 获取该Cell的Hash
-func (c *Cell) Hash() ([]byte, error) {
-	return hashCell(c)
-}
-
-// 将该Cell哈希结果以字符串编码
-func (c *Cell) HashString() (string, error) {
-	hash, err := hashCell(c)
-	if err != nil {
-		log.Error("Cell hash error")
+// 向当前Cell增加一个外部Cell的引用
+// 注：AddRef常用于添加一个已经存在的Cell
+// 注：Cell只允许最多4个Refs；且已提前分配好空间
+func (c *Cell) AddRef(cell *Cell) error {
+	for i := range c.refs {
+		if c.refs[i] == nil {
+			c.refs[i] = cell
+			return nil
+		}
 	}
-	return hex.EncodeToString(hash), err
+	return ErrCellRefsOverflow
 }
 
-// 将该Cell序列化为Boc
-func (c *Cell) ToBoc() ([]byte, error) {
-	return SerializeBoc(c, false, false, false, 0)
+// 取出当前Cell中下一个外部引用的Cell
+func (c *Cell) NextRef() (*Cell, error) {
+	if c.refCursor > 3 {
+		return nil, ErrCellRefsShortage
+	}
+	ref := c.refs[c.refCursor]
+	if ref != nil {
+		c.refCursor++
+		ref.Reset
+		return ref, nil
+	}
+	return nil, ErrCellRefsShortage
 }
 
-//------------------------------------------------------
+/////////////////////////////////////////////////////////////
+///											              ///
+///                      Helper                           ///
+///                                                       ///
+/////////////////////////////////////////////////////////////
 
 // helper: Cell的哈希化
 func hashCell(c *Cell) ([]byte, error) {
@@ -154,6 +310,66 @@ func buildBocSchemaWithoutRefs(c *Cell) []byte {
 	return res
 }
 
+// 将给定的符合BoC编码的单个Cell内容，反序列化为Cell结构
+// TODO
+func deserializeCellData(cellData []byte, referenceIndexSize int) (*Cell, []int, []byte, error) {
+	if len(cellData) < 2 {
+		return nil, nil, nil, errors.New("not enough bytes to encode cell descriptors")
+	}
+
+	// 注: 每一个Cell都是通过buildBocSchema构建并写入bitStr中的，
+	// 因此最终的boc中纯粹CellData那一部分，其实是多个结构相同的Cell子结构缀连而成的
+	// 此处，只是取出第一个Cell子结构
+	d1 := cellData[0]
+	d2 := cellData[1]
+	cellData = cellData[2:]
+
+	// 取出每一个Cell内容中的元数据
+	// 1. 是Ordinary/Exotic类型的Cell
+	// 2. 该Cell引用的Cells数量
+	// 3.
+	isExotic := (d1 & 8) > 0
+	refNum := int(d1 % 8)
+	dataBytesSize := int(math.Ceil(float64(d2) / 2))
+	fullfilledBytes := !((d2 % 2) > 0)
+	withHashes := (d1 & 0b10000) != 0
+	levelMask := d1 >> 5
+
+	// 构造Cell以填充
+	var cell *Cell
+	if isExotic {
+		cell = NewCellExotic()
+	} else {
+		cell = NewCell()
+	}
+	var refs = make([]int, 0)
+
+	if withHashes {
+		maskBits := int(math.Ceil(math.Log2(float64(levelMask) + 1)))
+		hashesNum := maskBits + 1
+		offset := hashesNum*hashSize + hashesNum*depthSize
+		cellData = cellData[offset:]
+	}
+
+	if len(cellData) < dataBytesSize+referenceIndexSize*refNum {
+		return nil, nil, nil, errors.New("not enough bytes to encode cell data")
+	}
+
+	//
+	err := cell.setTopUppedArray(cellData[0:dataBytesSize], fullfilledBytes)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	cellData = cellData[dataBytesSize:]
+
+	for i := 0; i < refNum; i++ {
+		refs = append(refs, int(readNBytesUIntFromArray(referenceIndexSize, cellData)))
+		cellData = cellData[referenceIndexSize:]
+	}
+
+	return cell, refs, cellData, nil
+}
+
 // helper: 递归的计算出某个Cell引用的Cell的最大深度（即CellTree DAG的最大深度）
 // Question: 在解析Cell时，最大深度的用处和处理是？
 func getMaxDepth(c *Cell, iterCounter *int) (int, error) {
@@ -182,4 +398,32 @@ func getMaxDepth(c *Cell, iterCounter *int) (int, error) {
 // helper: 获取该Cell中真正存储数据的Bit的[]byte
 func (c *Cell) getBuffer() []byte {
 	return c.bits.GetBuffer()
+}
+
+// 递归的对所有引用的Cell重置游标
+func (c *Cell) readReset(seen map[*Cell]struct{}) {
+	if _, hash := seen[c]; has {
+		return
+	}
+	seen[c] = struct{}{}
+	c.bits.ReadReset()
+	c.refCursor = 0
+	for _, ref := range c.Refs() {
+		ref.readReset(seen)
+	}
+	return
+}
+
+// 将当前的Cell编码为16进制字符串
+// 注：递归的将自身，以及所有引用的Cells全部编码为16进制字符串
+func (c *Cell) string(ident string, iterLimit *int) string {
+	s := ident + "x{" + c.bits.ToFiftHex() + "}\n"
+	if *iterLimit == 0 {
+		return s
+	}
+	*iterLimit -= 1
+	for _, ref := range c.Refs() {
+		s += ref.string(ident+" ", iterLimit)
+	}
+	return s
 }
