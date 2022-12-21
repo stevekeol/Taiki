@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"math"
 )
 
 // TODO：思考为何1023而不是1024?
@@ -91,12 +92,12 @@ func (c *Cell) String() string {
 
 // 将该Cell序列化为Boc
 func (c *Cell) Boc() ([]byte, error) {
-	return SerializeBoc(c, false, false, false, 0)
+	return SerializeBoC(c, false, false, false, 0)
 }
 
 // 将该Cell序列化为Boc并编码为字符串
 func (c *Cell) BocString() (string, error) {
-	boc, err := SerializeBoc(c, false, false, false, 0)
+	boc, err := SerializeBoC(c, false, false, false, 0)
 	if err != nil {
 		return "", err
 	}
@@ -105,7 +106,7 @@ func (c *Cell) BocString() (string, error) {
 
 // 将该Cell序列化为Boc并编码为base64
 func (c *Cell) BocBase64() (string, error) {
-	boc, err := SerializeBoc(c, false, false, false, 0)
+	boc, err := SerializeBoC(c, false, false, false, 0)
 	if err != nil {
 		return "", err
 	}
@@ -114,7 +115,7 @@ func (c *Cell) BocBase64() (string, error) {
 
 // 将当前Cell以TL的方式序列化写入到给定的Cell中
 // TODO：此处的tag应该是有作用的吧？
-func (c *Cell) MarshalTL(cell *Cell, tag string) error {
+func (c Cell) MarshalTL(cell *Cell, tag string) error {
 	*cell = c
 	return nil
 }
@@ -170,7 +171,7 @@ func (c *Cell) ReadReset() {
 /////////////////////////////////////////////////////////////
 
 // 获取当前Cell的底层的位串已使用的长度
-func (c *Cell) BitSize() int {
+func (c *Cell) BitLen() int {
 	return c.bits.GetWriteCursor()
 }
 
@@ -231,7 +232,7 @@ func (c *Cell) NextRef() (*Cell, error) {
 	ref := c.refs[c.refCursor]
 	if ref != nil {
 		c.refCursor++
-		ref.Reset
+		ref.ReadReset()
 		return ref, nil
 	}
 	return nil, ErrCellRefsShortage
@@ -356,14 +357,14 @@ func deserializeCellData(cellData []byte, referenceIndexSize int) (*Cell, []int,
 	}
 
 	//
-	err := cell.setTopUppedArray(cellData[0:dataBytesSize], fullfilledBytes)
+	err := cell.bits.SetTopUppedArray(cellData[0:dataBytesSize], fullfilledBytes)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	cellData = cellData[dataBytesSize:]
 
 	for i := 0; i < refNum; i++ {
-		refs = append(refs, int(readNBytesUIntFromArray(referenceIndexSize, cellData)))
+		refs = append(refs, int(readBytesAsUint(referenceIndexSize, cellData)))
 		cellData = cellData[referenceIndexSize:]
 	}
 
@@ -402,7 +403,7 @@ func (c *Cell) getBuffer() []byte {
 
 // 递归的对所有引用的Cell重置游标
 func (c *Cell) readReset(seen map[*Cell]struct{}) {
-	if _, hash := seen[c]; has {
+	if _, has := seen[c]; has {
 		return
 	}
 	seen[c] = struct{}{}

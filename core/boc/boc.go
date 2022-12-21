@@ -19,6 +19,9 @@ var (
 	leanBocMagicPrefixCRC = []byte{0xac, 0xc3, 0xa7, 0x28}
 )
 
+const hashSize = 32
+const depthSize = 2
+
 /////////////////////////////////////////////////////////////
 ///											              ///
 ///                       core                            ///
@@ -150,7 +153,7 @@ func DeSerializeBoC(boc []byte) ([]*Cell, error) {
 		}
 		for refIndex, refCell := range refCells {
 			// TODO
-			if refIndex < i {
+			if refCell < i {
 				return nil, errors.New("topological order is broken")
 			}
 			if refCell >= len(cellsArray) {
@@ -339,16 +342,16 @@ func parseBoc(boc []byte) (*bocInfo, error) {
 	// 裁剪掉boc中的offset
 	boc = boc[1:]
 
-	cellsNum := readNBytesUIntFromArray(sizeBytes, boc)
+	cellsNum := readBytesAsUint(sizeBytes, boc)
 	// 裁剪掉boc中的cellsNum
 	boc = boc[sizeBytes:]
-	rootsNum := readNBytesUIntFromArray(sizeBytes, boc)
+	rootsNum := readBytesAsUint(sizeBytes, boc)
 	// 裁剪掉boc中的rootsNum
 	boc = boc[sizeBytes:]
-	absentNum := readNBytesUIntFromArray(sizeBytes, boc)
+	absentNum := readBytesAsUint(sizeBytes, boc)
 	// 裁剪掉boc中的absentNum
 	boc = boc[sizeBytes:]
-	totalCellsSize := readNBytesUIntFromArray(offsetBytes, boc)
+	totalCellsSize := readBytesAsUint(offsetBytes, boc)
 	// 裁剪掉boc中的totCellsSize
 	boc = boc[offsetBytes:]
 
@@ -366,7 +369,7 @@ func parseBoc(boc []byte) (*bocInfo, error) {
 	// Roots
 	rootList := make([]uint, 0)
 	for i := 0; i < int(rootsNum); i++ {
-		rootList = append(rootList, readNBytesUIntFromArray(sizeBytes, boc))
+		rootList = append(rootList, readBytesAsUint(sizeBytes, boc))
 		// 裁剪掉boc中所有的描述CellRootHash的字节
 		boc = boc[sizeBytes:]
 	}
@@ -380,7 +383,7 @@ func parseBoc(boc []byte) (*bocInfo, error) {
 			return nil, errors.New("not enough bytes for index encoding")
 		}
 		for i := 0; i < int(cellsNum); i++ {
-			val := readNBytesUIntFromArray(offsetBytes, boc)
+			val := readBytesAsUint(offsetBytes, boc)
 			if hasCacheBits {
 				val /= 2
 			}
